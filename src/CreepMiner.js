@@ -45,6 +45,25 @@ export default class CreepMiner extends AbstractCreep {
     }
 
     /**
+     * Checks the source to see where there is an open mining spot
+     */
+    getMiningSpot() {
+        let spots = this.resourceManager.getAvailableResourcePositionsForSource(this.resource);
+        for (let i = 0; i < spots.length; i++) {
+            let spot = spots[i],
+                look = spot.look();
+
+            if (look.length === 0) {
+                return
+            }
+
+            for (var n = 0; n < look.length; n++) {
+                //if ()
+            }
+        }
+    }
+
+    /**
      * Creep will continue mining a single node until another creep is close enough,
      * then it will transfer the energy to the creep
      */
@@ -52,7 +71,13 @@ export default class CreepMiner extends AbstractCreep {
         var avoidArea = this.getAvoidedArea();
 
         // Move to the resource
-        this.creep.moveTo(this.resource, {avoid: avoidArea});
+        let moveStatus = this.creep.moveTo(this.resource, {avoid: avoidArea});
+        global.log(this.name + ' is moving to ', this.resource.pos);
+        if (moveStatus === -2) {
+            global.log(this.name + " has no path, moving to spawn");
+            moveStatus = this.creep.moveTo(this.room.spawns[0]);
+        }
+        //global.log(this.name + ' is moving to ' + this.resource.id, moveStatus);
 
         // Attempt to harvest. If its not in range, and we have energy, try to pass it off to other miners
         // This will help give energy to miners that are in range of a carrier

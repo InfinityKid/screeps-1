@@ -181,16 +181,17 @@ export default class CreepCarrier extends AbstractCreep {
 
     harvestEnergy() {
         //this.creep.moveTo(0,0);
-        var avoidArea = this.getAvoidedArea();
+        let avoidArea = this.getAvoidedArea(),
+            miner     = this.getMiner();
 
-        if (this.getMiner() === undefined) {
+        if (miner === undefined) {
             this.forget('target-miner');
             global.log(this.name + "'s target miner is dead. Lets grab a new one");
             return;
         }
 
-        this.creep.moveTo(this.getMiner(), {avoid: avoidArea});
-        if (this.creep.pos.inRangeTo(this.getMiner(), 3)) {
+        this.creep.moveTo(miner, {avoid: avoidArea});
+        if (this.creep.pos.inRangeTo(miner, 3)) {
             this.harvest();
         }
 

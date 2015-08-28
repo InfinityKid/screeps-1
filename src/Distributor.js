@@ -67,21 +67,21 @@ export default class Distributor {
 
             // If there are no more sources, but there are still creeps, there's an issue.
             if (source === undefined) {
-                global.log(creeps.length, sources.length, this.room.resourceManager.getAvailableResourcePositions().length);
+                //global.log(creeps.length, sources.length, this.room.resourceManager.getAvailableResourcePositions().length);
                 global.log("You have too many CreepMiner creeps per spawn. Should do something about that");
                 return;
             }
 
             let totalSpaces = Cache.memoryGet(source.id + '-totalSpaces');
-            //global.log(source.pos, 'total: ' + totalSpaces, 'Counter: ' + counter);
-            if (totalSpaces !== undefined && totalSpaces < counter) {
+            //global.log(source.pos, 'total: ' + totalSpaces, 'Counter: ' + (counter+1));
+            if (totalSpaces !== undefined && totalSpaces <= counter + 1) {
                 counter = 0;
                 sourceCounter++;
             }
 
             // Tell the creep which source id it should be moving to
             creep.remember('source', source.id);
-            global.log(creep.name, source.pos);
+            //global.log(creep.name, source.pos);
 
             // Add to counter for source
             counter++;

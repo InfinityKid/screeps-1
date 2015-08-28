@@ -76,6 +76,11 @@ export default class Room {
         let allowedSlots = this.resourceManager.getAvailableResourcePositions().length,
             pop   = this.population.getTotalPopulation();
 
+        if (allowedSlots === 0) {
+            allowedSlots = 2;
+        }
+
+
         if (pop < 6) {
             return allowedSlots > 2 ? 2 : allowedSlots;
         }
@@ -167,7 +172,7 @@ export default class Room {
                 //global.log(spawn.name + " is attempting to spawn a " + toSpawn);
 
                 if (this.creepFactory.new(toSpawn, spawn)) {
-                    global.log("Spawned, forgetting spawn");
+                    //global.log("Spawned, forgetting spawn");
                     Cache.memoryForget('next-spawn-' + spawn.name);
                 }
             } else {
@@ -289,9 +294,14 @@ export default class Room {
     loadCreeps() {
         let creeps = this.room.find(FIND_MY_CREEPS);
         for (let name in creeps) {
-            let creep = this.creepFactory.load(creeps[name]);
-            if (creep) {
-                this.creeps.push(creep);
+            try {
+                let creep = this.creepFactory.load(creeps[name]);
+                if (creep) {
+                    this.creeps.push(creep);
+                }
+            } catch (error) {
+                global.log("Error with creep: " + name, error);
+                this.game.notify(error, 60);
             }
         }
     }

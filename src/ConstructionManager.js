@@ -110,8 +110,8 @@ export default class ConstructionManager {
         }
 
         site = this.getController();
-        this.creep.moveTo(site, {avoid: avoidArea});
-        this.creep.upgradeController(site);
+        creep.creep.moveTo(site, {avoid: avoidArea});
+        creep.creep.upgradeController(site);
     }
 
     prioritize(sites) {

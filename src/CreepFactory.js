@@ -105,9 +105,27 @@ export default class CreepFactory {
         return creeps;
     }
 
+    getPopulationDifference() {
+        const pop = this.population.getTotalPopulation();
+
+        if (pop < 10) {
+            return 4;
+        }
+
+        if (pop < 20) {
+            return 3;
+        }
+
+        if (pop < 30) {
+            return 2;
+        }
+
+        return 1;
+    }
+
     getBestCreepOfType(type) {
         const data       = this.levels[type],
-              maxEnergy  = this.depositManager.energyCapacity() - 100,
+              maxEnergy  = this.depositManager.energyCapacity() / this.getPopulationDifference(),
               finalStats = data.finalStats;
 
         let best      = null,

@@ -37,43 +37,50 @@ export default class ResourceManager {
 
     getAvailableResourcePositions() {
         return global.Cache.remember(
-            'sources-available' + this.room.id,
+            'sources-available-' + this.room.name,
             () => {
                 let positions = [];
 
                 this.getSources().forEach((source) => {
-                    let sourcePositions = [];
-
-                    for (let x = -1; x <= 1; x++) {
-                        for (let y = -1; y <= 1; y++) {
-                            if (x === 0 && y === 0) {
-                                continue;
-                            }
-
-                            let pos   = this.room.getPositionAt(source.pos.x + x, source.pos.y + y),
-                                look  = pos.look(),
-                                added = false;
-
-                            for (let i = 0; i < look.length; i++) {
-                                let position = look[i];
-                                if (position.type === 'terrain' && position.terrain === 'wall') {
-                                    continue;
-                                }
-
-                                sourcePositions.push(pos);
-                                positions.push(pos);
-                                added        = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    global.log(source.pos, sourcePositions.length);
-                    Cache.memorySet(source.id + '-totalSpaces', sourcePositions.length);
+                    this.getAvailableResourcePositionsForSource(source).forEach((position) => {
+                        positions.push(position);
+                    })
                 });
 
                 return positions;
             }
         );
+    }
+
+    getAvailableResourcePositionsForSource(source) {
+        let sourcePositions = [];
+
+        for (let x = -1; x <= 1; x++) {
+            for (let y = -1; y <= 1; y++) {
+                if (x === 0 && y === 0) {
+                    continue;
+                }
+
+                let pos   = this.room.getPositionAt(source.pos.x + x, source.pos.y + y),
+                    look  = pos.look(),
+                    added = false;
+
+                for (let i = 0; i < look.length; i++) {
+                    let position = look[i];
+                    if (position.type === 'terrain' && position.terrain === 'wall') {
+                        continue;
+                    }
+
+                    sourcePositions.push(pos);
+                    added        = true;
+                    break;
+                }
+            }
+        }
+
+        //global.log(source.pos, sourcePositions.length);
+        Cache.memorySet(source.id + '-totalSpaces', sourcePositions.length);
+
+        return sourcePositions;
     }
 }

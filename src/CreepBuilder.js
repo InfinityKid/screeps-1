@@ -32,9 +32,11 @@ export default class CreepBuilder extends AbstractCreep {
         let site = this.constructionManager.constructStructure(this);
 
         // Transfers energy to creeps that are close
+        /**
         if (this.creep.pos.inRangeTo(site, 3)) {
             this.giveEnergy(site);
         }
+        //*/
 
         this.remember('last-energy', this.creep.carry.energy);
     }

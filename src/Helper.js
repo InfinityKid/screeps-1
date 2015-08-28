@@ -18,6 +18,10 @@ function calculateArea(x, y, distance = 4) {
     return avoidPosArray;
 }
 
+function getMemory(item) {
+
+}
+
 module.exports = {
     isCreepA: isCreepA,
     calculateArea: calculateArea
