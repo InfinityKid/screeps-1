@@ -22,26 +22,16 @@ export default class CreepBuilder extends AbstractCreep {
             return;
         }
 
-        this.forceControllerUpgrade = this.remember('forceControllerUpgrade');
+        //this.forceControllerUpgrade = this.remember('forceControllerUpgrade');
 
         this.act();
     }
 
     act() {
-        let site = null, avoidArea = this.getAvoidedArea();
+        // Finds a site to construct, and goes to it
+        let site = this.constructionManager.constructStructure(this);
 
-        if (this.forceControllerUpgrade === false) {
-            site = this.constructionManager.constructStructure(this);
-        }
-
-        if (site === null || site === false) {
-            site = this.constructionManager.getController();
-            this.creep.moveTo(site, {avoid: avoidArea});
-            this.creep.upgradeController(site);
-        }
-
-
-
+        // Transfers energy to creeps that are close
         if (this.creep.pos.inRangeTo(site, 3)) {
             this.giveEnergy(site);
         }
@@ -49,10 +39,16 @@ export default class CreepBuilder extends AbstractCreep {
         this.remember('last-energy', this.creep.carry.energy);
     }
 
+    /**
+     * Transfers energy to the closest creep that has no energy
+     * This should help when a builder doesn't have direct access to a site, because there are others in the way
+     */
     giveEnergy(site) {
         var creepsNear = this.creep.pos.findInRange(FIND_MY_CREEPS, 1);
         if (creepsNear.length) {
             if (site) {
+
+
                 var closest = site.pos.findClosest(creepsNear.concat(this.creep), {
                     filter: function (c) {
                         if (c.energy == 0) {

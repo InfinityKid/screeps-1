@@ -80,32 +80,41 @@ export default class ConstructionManager {
 
     constructStructure(creep) {
         let avoidArea = creep.getAvoidedArea(),
-            site;
+            site, moveTo, buildRep;
 
         if (this.damagedStructures.length != 0) {
-            site = creep.creep.pos.findClosest(this.damagedStructures);
-            creep.creep.moveTo(site, {avoid: avoidArea});
-            creep.creep.repair(site);
+            site     = creep.creep.pos.findClosest(this.damagedStructures);
+            moveTo   = creep.creep.moveTo(site, {avoid: avoidArea});
+            buildRep = creep.creep.repair(site);
+            //global.log(creep.name, "move: " + moveTo, "repair: " + buildRep);
 
             return site;
         }
 
         if (this.sites.length != 0) {
-            site = creep.creep.pos.findClosest(this.sites);
-            creep.creep.moveTo(site, {avoid: avoidArea});
-            creep.creep.build(site);
+            site     = creep.creep.pos.findClosest(this.sites);
+            moveTo   = creep.creep.moveTo(site, {avoid: avoidArea});
+            buildRep = creep.creep.build(site);
+            //global.log(creep.name, "move: " + moveTo, "build: " + buildRep);
 
             return site;
         }
 
         if (this.upgradeableStructures.length != 0) {
-            site = creep.creep.pos.findClosest(this.upgradeableStructures);
-            creep.creep.moveTo(site, {avoid: avoidArea});
-            creep.creep.repair(site);
+            site     = creep.creep.pos.findClosest(this.upgradeableStructures);
+            moveTo   = creep.creep.moveTo(site, {avoid: avoidArea});
+            buildRep = creep.creep.repair(site);
+            //global.log(creep.name, "move: " + moveTo, "repair: " + buildRep);
 
             return site;
         }
 
-        return false;
+        site = this.getController();
+        this.creep.moveTo(site, {avoid: avoidArea});
+        this.creep.upgradeController(site);
+    }
+
+    prioritize(sites) {
+
     }
 }

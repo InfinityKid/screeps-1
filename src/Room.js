@@ -46,17 +46,13 @@ export default class Room {
 
         this.population.distro.CreepBuilder.max = this.getBuilderMax();
         this.population.distro.CreepMiner.max   = this.getMinerMax();
-        this.population.distro.CreepCarrier.max = this.population.distro.CreepBuilder.total + this.population.distro.CreepMiner.total;
+        this.population.distro.CreepCarrier.max = (this.population.distro.CreepBuilder.total + this.population.distro.CreepMiner.total) * 2;
 
-        this.creepFactory = this.createCreepFactory();
+        this.creepFactory = new CreepFactory(this);
     }
 
     getBuilderMax() {
-        let pop   = this.population.getTotalPopulation();
-
-        if (pop < 4) {
-            return 0;
-        }
+        let pop = this.population.getTotalPopulation();
 
         if (pop < 10) {
             return 1
@@ -73,34 +69,18 @@ export default class Room {
         return 6;
     }
 
+    /**
+     * @returns {number}
+     */
     getMinerMax() {
-        let count = this.resourceManager.getSources().length,
+        let allowedSlots = this.resourceManager.getAvailableResourcePositions().length,
             pop   = this.population.getTotalPopulation();
 
-        if (pop < 4) {
-            return count * .5;
+        if (pop < 6) {
+            return allowedSlots > 2 ? 2 : allowedSlots;
         }
 
-        if (pop < 20) {
-            return count * 1;
-        }
-
-        if (pop < 50) {
-            return count * 2;
-        }
-
-        return count * 3;
-    }
-
-    createCreepFactory() {
-        return new CreepFactory(
-            this.game,
-            this.depositManager,
-            this.resourceManager,
-            this.constructionManager,
-            this.population,
-            this.roomManager
-        );
+        return allowedSlots;
     }
 
     /**
@@ -178,47 +158,130 @@ export default class Room {
         //}
 
         for (let i = 0; i < this.spawns.length; i++) {
-            let spawn = this.spawns[i];
+            let spawn = this.spawns[i], toSpawn;
 
-            // If we are currently spawning at this spawn, just skip it
-            if (spawn.spawning) {
+
+            toSpawn = this.getNextSpawn(spawn);
+
+            if (toSpawn !== false) {
+                //global.log(spawn.name + " is attempting to spawn a " + toSpawn);
+
+                if (this.creepFactory.new(toSpawn, spawn)) {
+                    global.log("Spawned, forgetting spawn");
+                    Cache.memoryForget('next-spawn-' + spawn.name);
+                }
+            } else {
+                //global.log(spawn.name + " isn't spawning right now");
+                Cache.memoryForget('next-spawn-' + spawn.name);
+            }
+
+        }
+    }
+
+    getNextSpawn(spawn) {
+        return Cache.memoryRemember(
+            'next-spawn-' + spawn.name,
+            () => {
+                // If we are currently spawning at this spawn, just skip it
+                if (spawn.spawning) {
+                    return false;
+                }
+
+                // If there's more than 20% of the energy capacity in storage, start the spawning process
+                if ((this.depositManager.energy() / this.depositManager.energyCapacity()) <= 0.2) {
+                    //return false;
+                }
+
+                return this.filterSpawnables(this.population.getTypes(), false);
+            }
+        );
+    }
+
+    filterSpawnables(spawnable, minCheck) {
+        let filtered = {},
+            counter  = 0;
+
+        for (let name in spawnable) {
+            if (!spawnable.hasOwnProperty(name)) {
                 continue;
             }
 
-            // If theres more than 20% of the energy capacity in storage, start the spawning process
-            if ((this.depositManager.energy() / this.depositManager.energyCapacity()) <= 0.2) {
+            //global.log("Testing spawn of " + name);
+
+            let type          = spawnable[name],
+                currentNumber = this.getCreepsOfType(name).length;
+
+            // Check to make sure we have a high enough population
+            if (this.population.getTotalPopulation() < type.minPopulation) {
                 continue;
             }
 
-            let types = this.population.getTypes();
-            for (let name in types) {
-                if (!types.hasOwnProperty(name)) {
-                    continue;
+            //global.log(name + " passed the minPopulation check");
+
+            // Check to make sure we have enough extension buildings for the given type
+            if (this.depositManager.deposits.length < type.minExtensions) {
+                continue;
+            }
+
+            //global.log(name + " passed the minExtensions check");
+
+            //global.log(type.total, type.max);
+            // Check to see if we've met the goal for the given number of creeps
+            if (type.total >= type.max) {
+                continue;
+            }
+
+            //global.log(name + " passed the max check");
+
+            /**
+             * If there are less creeps than required, do this:
+             * 1) Check if we are currently running through with minCheck
+             * 2) If we aren't, and we are on the first iteration, turn on the minCheck
+             * 3) If we aren't, and we aren't on the first iteration, restart, with minCheck on
+             * 4) If we are, keep checking
+             *
+             * If there are more creeps than the min required, keep checking
+             */
+            if (type.min > currentNumber) {
+                if (!minCheck) {
+                    //global.log("Setting the minCheck");
+                    if (counter === 0) {
+                        minCheck = true;
+                    } else {
+                        return this.filterSpawnables(spawnable, true);
+                    }
                 }
+            }
 
-                let type = types[name];
+            //global.log(name + ' passed the min check');
 
-                // Check to make sure we have enough extension buildings for the given type
-                if (this.depositManager.deposits.length < type.minExtensions) {
-                    continue;
-                }
+            type.chance = Math.floor((Math.random() * 10) + 1) * type.priority;
+            //global.log(name + ' has a chance of' + type.chance);
 
-                //global.log(name, type.currentPercentage, type.goalPercentage, type.total, type.max);
-                // Check to see if we've met the goal for the given number of creeps
-                if (type.currentPercentage >= type.goalPercentage && type.total >= type.max) {
-                    continue;
-                }
+            filtered[name] = type;
+        }
 
-                // Everything passed, so lets create a new creep for this spawn
-                if (this.creepFactory.new(name, spawn)) {
-                    break;
-                }
+        //global.log(filtered);
 
-                break;
+        let highest = 0, highestIndex = null;
+        for (let name in filtered) {
+            if (!filtered.hasOwnProperty(name)) {
+                return name;
+            }
+
+            if (!minCheck) {
+                return name;
+            }
+
+            if (filtered[name].chance > highest || highestIndex === null) {
+                highest      = filtered[name].chance;
+                highestIndex = name;
             }
         }
 
+        return highestIndex === null ? false : highestIndex;
     }
+
 
     /**
      * Grabs all the creeps in the room, and runs them through the creep factory to get their type

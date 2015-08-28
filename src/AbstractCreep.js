@@ -1,3 +1,5 @@
+import Helper from 'Helper';
+
 export default class AbstractCreep {
     get creep() {
         return this._creep;
@@ -15,8 +17,16 @@ export default class AbstractCreep {
         return this.creep.memory;
     }
 
-    constructor(game, creep) {
-        this.game  = game;
+    get type() {
+        return this.remember('role', this.name.split('-')[0]);
+    }
+
+    get game() {
+        return this.room.game;
+    }
+
+    constructor(room, creep) {
+        this.room  = room;
         this.creep = creep;
     }
 
@@ -36,45 +46,35 @@ export default class AbstractCreep {
 
     getAvoidedArea() {
         return global.Cache.remember(
-            'avoid-enemies-' + this.creep.room.name,
-            function () {
-                var calculateArea = function (x, y) {
-                    var avoidPosArray = [];
-
-                    for (var n = -4; n < 4; n++) {
-                        for (var i = -4; i < 4; i++) {
-                            avoidPosArray.push({
-                                x: x + n,
-                                y: y + i
-                            });
-                        }
-                    }
-
-
-                    return avoidPosArray;
-                };
-
-                var avoidPosArray = [];
-                var enemies       = this.creep.room.find(FIND_HOSTILE_CREEPS, {
+            'avoid-' + this.creep.room.name,
+            () => {
+                let avoidPosArray = [],
+                    enemies       = this.creep.room.find(FIND_HOSTILE_CREEPS, {
                     filter: function (t) {
                         return t.owner.username == 'Source Keeper';
 
                     }
                 });
 
-                for (var i = 0; i < enemies.length; i++) {
-                    var startPosX = enemies[i].pos.x;
-                    var startPosY = enemies[i].pos.y;
-                    var positions = calculateArea(startPosX, startPosY);
-                    for (var n = 0; n < positions.length; n++) {
+                for (let i = 0; i < enemies.length; i++) {
+                    let startPosX = enemies[i].pos.x,
+                        startPosY = enemies[i].pos.y,
+                        positions = Helper.calculateArea(startPosX, startPosY);
+
+                    for (let n = 0; n < positions.length; n++) {
                         avoidPosArray.push(
                             this.creep.room.getPositionAt(positions[n].x, positions[n].y)
                         );
                     }
                 }
 
+                if (this.type !== 'CreepMiner') {
+                    var sourcePositions = this.room.resourceManager.getAvailableResourcePositions();
+                    sourcePositions.forEach((position) => { avoidPosArray.push(position); });
+                }
+
                 return avoidPosArray;
-            }.bind(this)
+            }
         );
     }
 

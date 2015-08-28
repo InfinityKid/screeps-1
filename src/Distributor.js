@@ -52,33 +52,39 @@ export default class Distributor {
 
     /**
      * Moves an equal number of miners to each source in the room
+     * @todo Get the number of miners a source can actually use, and attempt to put them in the right places
      */
     distributeMiners() {
-        let sources   = this.sources,
-            creeps    = this.getCreepsOfType('CreepMiner'),
-            perSource = Math.round(creeps.length / sources.length),
-            counter   = 0,
-            source    = 0;
+        let sources       = this.sources,
+            creeps        = this.getCreepsOfType('CreepMiner'),
+            counter       = 0,
+            sourceCounter = 0;
 
         // Runs through all the creeps of the given type
         for (let i = 0; i < creeps.length; i++) {
-            let creep = creeps[i];
+            let source = sources[sourceCounter],
+                creep  = creeps[i];
 
             // If there are no more sources, but there are still creeps, there's an issue.
-            if (!sources[source]) {
+            if (source === undefined) {
+                global.log(creeps.length, sources.length, this.room.resourceManager.getAvailableResourcePositions().length);
                 global.log("You have too many CreepMiner creeps per spawn. Should do something about that");
                 return;
             }
 
-            // Tell the creep which source id it should be moving to
-            creep.remember('source', sources[source].id);
-
-            // Add to counter for source. If over perSource, move to next source
-            counter++;
-            if (counter >= perSource) {
+            let totalSpaces = Cache.memoryGet(source.id + '-totalSpaces');
+            //global.log(source.pos, 'total: ' + totalSpaces, 'Counter: ' + counter);
+            if (totalSpaces !== undefined && totalSpaces < counter) {
                 counter = 0;
-                source++;
+                sourceCounter++;
             }
+
+            // Tell the creep which source id it should be moving to
+            creep.remember('source', source.id);
+            global.log(creep.name, source.pos);
+
+            // Add to counter for source
+            counter++;
         }
     }
 
@@ -107,7 +113,7 @@ export default class Distributor {
         for (let i = 0; i < builders.length; i++) {
             // Make sure theres one builder always on the controller
             //builders[i].forget('forceControllerUpgrade');
-            builders[i].remember('forceControllerUpgrade', i < this.getBuildersOnController(builders.length));
+            //builders[i].remember('forceControllerUpgrade', i < this.getBuildersOnController(builders.length));
         }
     }
 

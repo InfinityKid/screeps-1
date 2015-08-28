@@ -1,42 +1,12 @@
 const settings = {
-    populationOrder: [
-        'CreepMiner',
-        'CreepCarrier',
-        'CreepMiner',
-        'CreepCarrier',
-        'CreepBuilder',
-        'CreepCarrier',
-        'CreepBuilder',
-        'CreepCarrier',
-        'CreepBuilder',
-        'CreepCarrier',
-        'CreepCarrier',
-        'CreepCarrier',
-        'CreepCarrier',
-        'CreepCarrier',
-        'CreepCarrier',
-        'CreepCarrier',
-        'CreepMiner',
-        'CreepMiner',
-        'CreepCarrier',
-        'CreepCarrier',
-        'CreepMiner',
-        'CreepMiner',
-        'CreepCarrier',
-        'CreepCarrier',
-        'CreepDefender',
-        'CreepDefender',
-        'CreepDefender',
-        'CreepDefender',
-        'CreepDefender',
-        'CreepDefender'
-    ],
     creeps: {
         CreepMiner:   {
-            goalPercentage: 0.3,
+            priority:       0,
+            min:            2,
             max:            4,
             total:          0,
             minExtensions:  0,
+            minPopulation:  0,
             finalStats: [CARRY, WORK],
             levels:     [
                 {
@@ -82,10 +52,12 @@ const settings = {
             ]
         },
         CreepBuilder: {
-            goalPercentage: 0.25,
+            priority:       .2,
+            min:            1,
             max:            4,
             total:          0,
             minExtensions:  0,
+            minPopulation:  4,
             finalStats: [CARRY, WORK],
             levels:     [
                 {
@@ -131,10 +103,12 @@ const settings = {
             ]
         },
         CreepCarrier: {
-            goalPercentage: 0.3,
+            priority:       1,
+            min:            3,
             max:            15,
             total:          0,
             minExtensions:  0,
+            minPopulation:  1,
             finalStats: [CARRY, MOVE],
             levels:     [
                 {
@@ -180,10 +154,12 @@ const settings = {
             ]
         },
         CreepHealer:  {
-            goalPercentage: 0.25,
+            priority:       .8,
+            min:            0,
             max:            2,
             total:          0,
             minExtensions:  2,
+            minPopulation:  30,
             finalStats: [TOUGH, HEAL, MOVE],
             levels:     [
                 {
@@ -229,10 +205,12 @@ const settings = {
             ]
         },
         CreepDefender: {
-            goalPercentage: 0.25,
+            priority:       1.2,
+            min:            0,
             max:            5,
             total:          0,
             minExtensions:  2,
+            minPopulation:  15,
             finalStats: [TOUGH, ATTACK],
             levels:     [
                 {
@@ -278,10 +256,12 @@ const settings = {
             ]
         },
         CreepAttacker: {
-            goalPercentage: 0.2,
+            priority:       1,
+            min:            0,
             max:            3,
             total:          0,
             minExtensions:  10,
+            minPopulation:  40,
             finalStats: [TOUGH, RANGED_ATTACK],
             levels:     [
                 {

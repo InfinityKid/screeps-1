@@ -7,6 +7,7 @@ import CreepAttacker from 'CreepAttacker';
 import CreepScout from 'CreepScout';
 
 import settings from 'settings';
+import _ from 'lodash';
 
 export default class CreepFactory {
     static ERRORS = {
@@ -17,14 +18,32 @@ export default class CreepFactory {
         "-10": "ERR_INVALID_ARGS"
     };
 
-    constructor(game, depositManager, resourceManager, constructionManager, population, roomHandler) {
-        this.game                = game;
-        this.depositManager      = depositManager;
-        this.resourceManager     = resourceManager;
-        this.constructionManager = constructionManager;
-        this.population          = population;
-        this.roomHandler         = roomHandler;
+    get game() {
+        return this.roomManager.game;
+    }
 
+    get depositManager() {
+        return this.room.depositManager;
+    }
+
+    get resourceManager() {
+        return this.room.resourceManager;
+    }
+
+    get constructionManager() {
+        return this.room.constructionManager;
+    }
+
+    get population() {
+        return this.room.population;
+    }
+
+    get roomManager() {
+        return this.room.roomManager;
+    }
+
+    constructor(room) {
+        this.room   = room;
         this.levels = this.setLevels();
     }
 
@@ -37,25 +56,25 @@ export default class CreepFactory {
 
         switch (role) {
             case 'CreepBuilder':
-                loadedCreep = new CreepBuilder(this.game, creep, this.depositManager, this.constructionManager);
+                loadedCreep = new CreepBuilder(this.room, creep, this.depositManager, this.constructionManager);
                 break;
             case 'CreepMiner':
-                loadedCreep = new CreepMiner(this.game, creep, this.population, this.resourceManager);
+                loadedCreep = new CreepMiner(this.room, creep, this.population, this.resourceManager);
                 break;
             case 'CreepDefender':
-                loadedCreep = new CreepDefender(this.game, creep);
+                loadedCreep = new CreepDefender(this.room, creep);
                 break;
             case 'CreepHealer':
-                loadedCreep = new CreepHealer(this.game, creep);
+                loadedCreep = new CreepHealer(this.room, creep);
                 break;
             case 'CreepCarrier':
-                loadedCreep = new CreepCarrier(this.game, creep, this.depositManager, this.resourceManager, this.constructionManager);
+                loadedCreep = new CreepCarrier(this.room, creep, this.depositManager, this.resourceManager, this.constructionManager);
                 break;
             case 'CreepAttacker':
-                loadedCreep = new CreepAttacker(this.game, creep);
+                loadedCreep = new CreepAttacker(this.room, creep);
                 break;
             case 'CreepScout':
-                loadedCreep = new CreepScout(this.game, creep, this.roomHandler);
+                loadedCreep = new CreepScout(this.room, creep, this.roomManager);
                 break;
         }
 
@@ -88,7 +107,7 @@ export default class CreepFactory {
 
     getBestCreepOfType(type) {
         const data       = this.levels[type],
-              maxEnergy  = this.depositManager.energyCapacity() - 50,
+              maxEnergy  = this.depositManager.energyCapacity() - 100,
               finalStats = data.finalStats;
 
         let best      = null,
@@ -96,7 +115,7 @@ export default class CreepFactory {
 
         // If we have no way of getting energy back to spawn, then lets only do level ones
         if (this.population.getTotalPopulation() < 5) {
-            best = data.levels[0];
+            best      = data.levels[0];
             bestIndex = 0;
         } else {
             for (let i = 0; i < data.levels.length; i++) {
@@ -148,7 +167,7 @@ export default class CreepFactory {
         let status = spawn.createCreep(abilities, creepType + '-' + level + '-' + id, {role: creepType});
         global.log('Spawn level ' + level + ' ' + creepType, status);
 
-        return status === OK;
+        return _.isString(status);
     }
 
     getPointsForAbilities(abilities) {
